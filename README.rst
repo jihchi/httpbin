@@ -200,9 +200,9 @@ Docker
 ------
 Docker Hub: `jihchi/httpbin <https://hub.docker.com/r/jihchi/httpbin/>`__
 
-```
-$ docker run -p 8000:8000 jihchi/httpbin
-```
+.. code:: bash
+
+    $ docker run -p 8000:8000 jihchi/httpbin
 
 Changelog
 ---------
