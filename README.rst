@@ -198,7 +198,7 @@ Or run it directly:
 
 Docker
 ------
-Docker Hub: [jihchi/httpbin](https://hub.docker.com/r/jihchi/httpbin/)
+Docker Hub: `jihchi/httpbin <https://hub.docker.com/r/jihchi/httpbin/>`
 
 ```
 $ docker run -p 8000:8000 jihchi/httpbin
