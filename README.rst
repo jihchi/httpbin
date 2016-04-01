@@ -196,6 +196,14 @@ Or run it directly:
 
     $ python -m httpbin.core [--port=PORT] [--host=HOST]
 
+Docker
+------
+Docker Hub: [jihchi/httpbin](https://hub.docker.com/r/jihchi/httpbin/)
+
+```
+$ docker run -p 8000:8000 jihchi/httpbin
+```
+
 Changelog
 ---------
 -  0.4.1: Added floating-point support for /delay endpoint
