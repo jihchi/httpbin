@@ -224,9 +224,9 @@ def _redirect(kind, n, external):
     return redirect(url_for('{0}_redirect_n_times'.format(kind), n=n - 1, _external=external))
 
 
-@app.route('/redirect-to')
+@app.route('/redirect-to', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'TRACE'])
 def redirect_to():
-    """302 Redirects to the given URL."""
+    """302/3XX Redirects to the given URL."""
 
     args = CaseInsensitiveDict(request.args.items())
 
@@ -235,6 +235,10 @@ def redirect_to():
     # header to the exact string supplied.
     response = app.make_response('')
     response.status_code = 302
+    if 'status_code' in args:
+        status_code = int(args['status_code'])
+        if status_code >= 300 and status_code < 400:
+            response.status_code = status_code
     response.headers['Location'] = args['url'].encode('utf-8')
 
     return response
@@ -312,10 +316,10 @@ def view_status_code(codes):
 def response_headers():
     """Returns a set of response headers from the query string """
     headers = MultiDict(request.args.items(multi=True))
-    response = jsonify(headers.lists())
+    response = jsonify(list(headers.lists()))
 
     while True:
-        content_len_shown = response.headers['Content-Length']
+        original_data = response.data
         d = {}
         for key in response.headers.keys():
             value = response.headers.get_all(key)
@@ -325,7 +329,8 @@ def response_headers():
         response = jsonify(d)
         for key, value in headers.items(multi=True):
             response.headers.add(key, value)
-        if response.headers['Content-Length'] == content_len_shown:
+        response_has_changed = response.data != original_data
+        if not response_has_changed:
             break
     return response
 
@@ -407,8 +412,14 @@ def hidden_basic_auth(user='user', passwd='passwd'):
 
 
 @app.route('/digest-auth/<qop>/<user>/<passwd>')
-def digest_auth(qop=None, user='user', passwd='passwd'):
+def digest_auth_md5(qop=None, user='user', passwd='passwd'):
+    return digest_auth(qop, user, passwd, "MD5")
+
+@app.route('/digest-auth/<qop>/<user>/<passwd>/<algorithm>')
+def digest_auth(qop=None, user='user', passwd='passwd', algorithm='MD5'):
     """Prompts the user for authorization using HTTP Digest auth"""
+    if algorithm not in ('MD5', 'SHA-256'):
+        algorithm = 'MD5'
     if qop not in ('auth', 'auth-int'):
         qop = None
     if 'Authorization' not in request.headers or  \
@@ -427,12 +438,12 @@ def digest_auth(qop=None, user='user', passwd='passwd'):
             str(time.time()).encode('ascii'),
             b':',
             os.urandom(10)
-        ]))
-        opaque = H(os.urandom(10))
+        ]), "MD5")
+        opaque = H(os.urandom(10), "MD5")
 
         auth = WWWAuthenticate("digest")
         auth.set_digest('me@kennethreitz.com', nonce, opaque=opaque,
-                        qop=('auth', 'auth-int') if qop is None else (qop, ))
+                        qop=('auth', 'auth-int') if qop is None else (qop, ), algorithm=algorithm)
         response.headers['WWW-Authenticate'] = auth.to_header()
         response.headers['Set-Cookie'] = 'fake=fake_value'
         return response
@@ -455,7 +466,7 @@ def drip():
     """Drips data over a duration after an optional initial delay."""
     args = CaseInsensitiveDict(request.args.items())
     duration = float(args.get('duration', 2))
-    numbytes = int(args.get('numbytes', 10))
+    numbytes = min(int(args.get('numbytes', 10)),(10 * 1024 * 1024)) # set 10MB limit
     code = int(args.get('code', 200))
     pause = duration / numbytes
 

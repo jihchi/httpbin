@@ -33,6 +33,7 @@ Endpoint                                 Description
 `/response-headers`_                     Returns given response headers.
 `/redirect/:n`_                          302 Redirects *n* times.
 `/redirect-to?url=foo`_                  302 Redirects to the *foo* URL.
+`/redirect-to?url=foo&status_code=307`_  307 Redirects to the *foo* URL.
 `/relative-redirect/:n`_                 302 Relative redirects *n* times.
 `/cookies`_                              Returns cookie data.
 `/cookies/set?name=value`_               Sets one or more simple cookies.
@@ -40,9 +41,9 @@ Endpoint                                 Description
 `/basic-auth/:user/:passwd`_             Challenges HTTPBasic Auth.
 `/hidden-basic-auth/:user/:passwd`_      404'd BasicAuth.
 `/digest-auth/:qop/:user/:passwd`_       Challenges HTTP Digest Auth.
-`/stream/:n`_                            Streams *n* - 100 lines.
-`/delay/:n`_                             Delays responding for *n* - 10 seconds.
-`/drip`_                                 Drips data over a duration after an optional initial delay, then (optionally) returns with the given status code.
+`/stream/:n`_                            Streams *n* – 100 lines.
+`/delay/:n`_                             Delays responding for *n* – 10 seconds.
+`/drip`_                                 Drips up to 10MB data over a duration after an optional initial delay, then (optionally) returns with the given status code.
 `/range/:n`_                             Streams *n* bytes, and allows specifying a *Range* header to select a subset of the data. Accepts a *chunk\_size* and request *duration* parameter.
 `/html`_                                 Renders an HTML Page.
 `/robots.txt`_                           Returns some robots.txt rules.
@@ -68,6 +69,8 @@ Endpoint                                 Description
 .. _/response-headers: http://httpbin.org/response-headers?Content-Type=text/plain;%20charset=UTF-8&Server=httpbin
 .. _/redirect/:n: http://httpbin.org/redirect/6
 .. _/redirect-to?url=foo: http://httpbin.org/redirect-to?url=http://example.com/
+.. _/redirect-to?url=foo&status_code=307:
+    http://httpbin.org/redirect-to?url=http://example.com/&status_code=307
 .. _/relative-redirect/:n: http://httpbin.org/relative-redirect/6
 .. _/cookies: http://httpbin.org/cookies
 .. _/cookies/set?name=value: http://httpbin.org/cookies/set?k1=v1&k2=v2
@@ -190,10 +193,12 @@ For example, using Gunicorn:
     $ pip install httpbin
     $ gunicorn httpbin:app
 
-Or run it directly:
+Or install and run it directly:
 
 .. code:: bash
 
+    $ git clone https://github.com/Runscope/httpbin.git
+    $ pip install -e httpbin
     $ python -m httpbin.core [--port=PORT] [--host=HOST]
 
 Docker
@@ -206,6 +211,11 @@ Docker Hub: `jihchi/httpbin <https://hub.docker.com/r/jihchi/httpbin/>`__
 
 Changelog
 ---------
+
+-  0.5.0:
+  - Allow /redirect-to to work with multiple methods
+  - Allow MD5 or SHA-256 to be chosen as algorithms for HTTP Digest Auth
+  - Set a 10MB limit on /drip
 -  0.4.1: Added floating-point support for /delay endpoint
 -  0.4.0: New /image/svg endpoint, add deploy to heroku button, add 406 response to /image, and don't always emit the transfer-encoding header for stream endpoint.
 -  0.3.0: A number of new features, including a /range endpoint, lots of
